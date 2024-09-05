@@ -229,19 +229,22 @@ lazy val opentelemetry = project
     )
   )
 
-lazy val datadog = project
+lazy val datadog = crossProject(JSPlatform, JVMPlatform)
   .in(file("modules/datadog"))
-  .dependsOn(core.jvm, opentracing)
-  .enablePlugins(AutomateHeaderPlugin)
+  .dependsOn(core)
+  .enablePlugins(AutomateHeaderPlugin, ScalaJSBundlerPlugin)
   .settings(commonSettings)
   .settings(
     name := "natchez-datadog",
-    description := "Datadog bindings for Natchez.",
+    description := "Datadog bindings for Natchez.",    
     libraryDependencies ++= Seq(
       "com.datadoghq" % "dd-trace-ot" % "1.38.1",
       "com.datadoghq" % "dd-trace-api" % "1.38.1"
     )
-  )
+  ).jsSettings(
+    npmDependencies in Compile += "dd-trace" -> "latest",
+  ).jvmConfigure(_.dependsOn(opentracing))
+   
 
 lazy val log = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .in(file("modules/log"))
@@ -354,7 +357,7 @@ lazy val mock = project
 
 lazy val examples = project
   .in(file("modules/examples"))
-  .dependsOn(core.jvm, jaeger, honeycomb, lightstepHttp, datadog, newrelic, log.jvm, opentelemetry)
+  .dependsOn(core.jvm, jaeger, honeycomb, lightstepHttp, datadog.jvm, newrelic, log.jvm, opentelemetry)
   .enablePlugins(AutomateHeaderPlugin, NoPublishPlugin)
   .settings(commonSettings)
   .settings(
@@ -401,7 +404,7 @@ lazy val testkit = crossProject(JSPlatform, JVMPlatform, NativePlatform)
 
 lazy val docs = project
   .in(file("modules/docs"))
-  .dependsOn(mtl.jvm, honeycomb, datadog, jaeger, log.jvm, opentelemetry)
+  .dependsOn(mtl.jvm, honeycomb, datadog.jvm, jaeger, log.jvm, opentelemetry)
   .enablePlugins(AutomateHeaderPlugin)
   .enablePlugins(ParadoxPlugin)
   .enablePlugins(ParadoxSitePlugin)
